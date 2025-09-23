@@ -1,37 +1,52 @@
-.PHONY: build install clean
+.PHONY: default init configure build install clean
 
 DIST := trixie
 INFO := debian13
-ISO  := $(shell readlink -f ./builds/trixie/live-image-amd64.hybrid.iso)
 NAME := live_$(DIST)
-MEM  := 16384
-CPU  := 2
+SESH := qemu:///session
+PKGS := base
+STOW := base
+MACH := q35
+VCPU := 2
+MEM  := 8192
+NET  := user,model=virtio
+CPU  := host-passthrough
+ISO  := $(shell readlink -f ./builds/$(DIST)/live-image-amd64.hybrid.iso)
 
-default: build
+default: init configure build
 
-build:
+init:
 	mkdir -p builds/$(DIST)
 	cd builds/$(DIST) && \
-	lb config \
-		--distribution $(DIST) \
-		--debian-installer live && \
+	lb config --distribution $(DIST) --debian-installer live
+
+configure:
+	stow -t ./builds/$(DIST) -D $(PKGS)
+	stow -t ./builds/$(DIST) $(STOW)
+
+build:
+	cd builds/$(DIST) && \
+	sudo lb clean --chroot && \
 	sudo lb build
 
 install:
-	virt-install --connect qemu:///session \
-	  --name "$(NAME)" \
-	  --osinfo "$(INFO)" \
-	  --machine q35 \
-	  --memory "$(MEM)" --vcpus "$(CPU)" \
-	  --cpu host-model --virt-type kvm \
-	  --cdrom "$(ISO)" \
-	  --disk none \
-	  --network none \
-	  --graphics spice,listen=127.0.0.1 \
-	  --video virtio \
-	  --noautoconsole
+	virt-install \
+		--connect "$(SESH)" \
+		--name "$(NAME)" \
+		--osinfo "$(INFO)" \
+		--vcpus "$(VCPU)" \
+		--memory "$(MEM)" \
+		--machine "$(MACH)" \
+		--cpu "$(CPU)" \
+		--virt-type kvm \
+		--cdrom "$(ISO)" \
+		--disk none \
+		--network "$(NET)" \
+		--graphics spice,listen=127.0.0.1 \
+		--video virtio \
+		--noautoconsole
 
 clean:
-	virsh --connect qemu:///session \
-		undefine --nvram --snapshots-metadata "$(NAME)" || true
+	virsh --connect "$(SESH)" destroy "$(NAME)" || true
+	virsh --connect "$(SESH)" undefine "$(NAME)" || true
 	sudo rm -rf ./builds

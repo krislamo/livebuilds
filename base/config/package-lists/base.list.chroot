@@ -1,0 +1,13 @@
+bind9-dnsutils
+curl
+openssh-client
+pwgen
+python3-pip
+python3-venv
+stow
+tmux
+traceroute
+tree
+vim
+wget
+wireguard
