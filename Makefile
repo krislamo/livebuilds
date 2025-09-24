@@ -4,7 +4,7 @@ DIST := trixie
 INFO := debian13
 NAME := live_$(DIST)
 SESH := qemu:///session
-PKGS := base
+PKGS := base sway
 STOW := base
 MACH := q35
 VCPU := 2
@@ -21,8 +21,8 @@ init:
 	lb config --distribution $(DIST) --debian-installer live
 
 configure:
-	stow -t ./builds/$(DIST) -D $(PKGS)
-	stow -t ./builds/$(DIST) $(STOW)
+	stow -v -t ./builds/$(DIST) -D $(PKGS)
+	stow -v -t ./builds/$(DIST) $(STOW)
 
 build:
 	cd builds/$(DIST) && \
@@ -42,7 +42,7 @@ install:
 		--cdrom "$(ISO)" \
 		--disk none \
 		--network "$(NET)" \
-		--graphics spice,listen=127.0.0.1 \
+		--graphics spice,listen=127.0.0.1,image.compression=off \
 		--video virtio \
 		--noautoconsole
 
