@@ -1,6 +1,7 @@
 .PHONY: default init configure build install clean
 
 DIST := trixie
+AREA := main contrib non-free-firmware
 INFO := debian13
 NAME := live_$(DIST)
 SESH := qemu:///session
@@ -18,7 +19,8 @@ default: init configure build
 init:
 	mkdir -p builds/$(DIST)
 	cd builds/$(DIST) && \
-	lb config --distribution $(DIST) --debian-installer live
+	lb config --distribution $(DIST) \
+		--archive-areas "$(AREA)" --debian-installer live
 
 configure:
 	stow -t ./builds/$(DIST) -D $(PKGS)
